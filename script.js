@@ -16,8 +16,7 @@ function getLocation() {
   }
 }
 
-function spinWheel() {
-  const restaurantChoices = ["Restaurant A", "Restaurant B", "Restaurant C", "Restaurant D", "Restaurant E"];
+async function spinWheel() {
   const canvas = document.getElementById("spinnerCanvas");
   const resultDisplay = document.getElementById("result");
 
@@ -36,8 +35,22 @@ function spinWheel() {
   ctx.arc(centerX, centerY, canvas.width / 2 - 10, 0, 2 * Math.PI);
   ctx.stroke();
 
-  const angle = Math.random() * 2 * Math.PI;
-  const chosenRestaurant = restaurantChoices[Math.floor(Math.random() * restaurantChoices.length)];
+  try {
+    const restaurantData = await getRestaurantData(userLocation.latitude, userLocation.longitude);
+    const restaurantChoices = restaurantData.map((restaurant) => restaurant.name);
 
-  resultDisplay.innerText = `You should try: ${chosenRestaurant}`;
+    const chosenRestaurant = restaurantChoices[Math.floor(Math.random() * restaurantChoices.length)];
+
+    resultDisplay.innerText = `You should try: ${chosenRestaurant}`;
+  } catch (error) {
+    console.error("Error fetching restaurant data:", error);
+    resultDisplay.innerText = "Error fetching restaurant data";
+  }
+}
+
+async function getRestaurantData(latitude, longitude) {
+  const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=seafood`);
+  const data = await response.json();
+
+  return data.meals || [];
 }
