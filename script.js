@@ -37,7 +37,7 @@ async function spinWheel() {
 
   try {
     const restaurantData = await getRestaurantData(userLocation.latitude, userLocation.longitude);
-    const restaurantChoices = restaurantData.map((restaurant) => restaurant.name);
+    const restaurantChoices = restaurantData.map((restaurant) => restaurant.strMeal);
 
     const chosenRestaurant = restaurantChoices[Math.floor(Math.random() * restaurantChoices.length)];
 
@@ -48,9 +48,15 @@ async function spinWheel() {
   }
 }
 
-async function getRestaurantData(latitude, longitude) {
-  const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=seafood`);
-  const data = await response.json();
 
-  return data.meals || [];
+async function getRestaurantData(latitude, longitude) {
+  try {
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=seafood`);
+    const data = await response.json();
+
+    return data.meals || [];
+  } catch (error) {
+    console.error("Error fetching restaurant data:", error);
+    return [];
+  }
 }
