@@ -4,16 +4,39 @@ function getLocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition((position) => {
       userLocation = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
       };
-      alert(`Location obtained: ${userLocation.latitude}, ${userLocation.longitude}`);
+      alert(`Location obtained: ${userLocation.lat}, ${userLocation.lng}`);
     }, (error) => {
       console.error(`Geolocation error: ${error.message}`);
+      askForZipCode();
     });
   } else {
-    alert("Geolocation is not supported by this browser.");
+    askForZipCode();
   }
+}
+
+function askForZipCode() {
+  const zipInput = prompt("Geolocation not available. Enter your zip code:");
+  if (zipInput) {
+    getZipCodeLocation(zipInput);
+  } else {
+    alert("Zip code not provided. Please try again.");
+  }
+}
+
+function getZipCodeLocation(zipCode) {
+  // Add logic to convert the zip code to latitude and longitude.
+  // This can be done using a geocoding service or an API.
+
+  // For simplicity, let's assume the user entered a valid zip code and set a default location.
+  userLocation = {
+    lat: 40.7128, // Default to New York City latitude
+    lng: -74.0060 // Default to New York City longitude
+  };
+
+  alert(`Location obtained from zip code: ${userLocation.lat}, ${userLocation.lng}`);
 }
 
 async function spinWheel() {
@@ -36,8 +59,8 @@ async function spinWheel() {
   ctx.stroke();
 
   try {
-    const restaurantData = await getRestaurantData(userLocation.latitude, userLocation.longitude);
-    const restaurantChoices = restaurantData.map((restaurant) => restaurant.strMeal);
+    const restaurantData = await getRestaurantData(userLocation.lat, userLocation.lng);
+    const restaurantChoices = restaurantData.businesses.map((business) => business.name);
 
     const chosenRestaurant = restaurantChoices[Math.floor(Math.random() * restaurantChoices.length)];
 
@@ -48,15 +71,26 @@ async function spinWheel() {
   }
 }
 
+async function getRestaurantData(lat, lng) {
+  const yelpApiKey = 'ccfIzOXPFiiM5lnqEGmuKJdJ0L6MN6PblzQeT6sAm3Jo5ybRd-eprvsy5szeYQy-IMA-_Xqx_4jRqbQfDSh29iVHrYUwf32tQHDYz3FBE2NwGnXMLJhhPIBv6gSWZXYx';
 
-async function getRestaurantData(latitude, longitude) {
   try {
-    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=seafood`);
-    const data = await response.json();
+    const response = await fetch(`https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${lng}&categories=restaurants&limit=10`, {
+      headers: {
+        Authorization: `Bearer ${yelpApiKey}`,
+      },
+      mode: 'cors', // Add this line
+    });
 
-    return data.meals || [];
+    if (!response.ok) {
+      throw new Error(`Yelp API request failed with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data || [];
   } catch (error) {
     console.error("Error fetching restaurant data:", error);
     return [];
   }
 }
+
